@@ -1,0 +1,43 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eks-ai-platform
+  region: ${AWS_REGION}
+  version: "1.31"
+
+# VPC and subnets provisioned by CDK (infra/).
+# scripts/create-cluster.sh populates these values from CDK outputs.
+vpc:
+  id: "${VPC_ID}"
+  subnets:
+    private:
+      ${AZ_1}: { id: "${PRIVATE_SUBNET_1}" }
+      ${AZ_2}: { id: "${PRIVATE_SUBNET_2}" }
+    public:
+      ${AZ_1}: { id: "${PUBLIC_SUBNET_1}" }
+      ${AZ_2}: { id: "${PUBLIC_SUBNET_2}" }
+
+# OIDC provider — required for IRSA (pod-level IAM roles).
+# Each tutorial creates its own ServiceAccount + IAM role pair.
+iam:
+  withOIDC: true
+
+managedNodeGroups:
+  - name: cpu-nodes
+    instanceType: m5.xlarge
+    minSize: 1
+    maxSize: 5
+    desiredCapacity: 2
+    privateNetworking: true
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
+  - name: aws-ebs-csi-driver
