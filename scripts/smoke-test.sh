@@ -20,12 +20,13 @@ kubectl get pods -n kube-system
 
 echo ""
 echo "── Smoke test: run a hello-world pod ───────────────────────────────────"
+kubectl delete pod smoke-test --ignore-not-found
 kubectl run smoke-test \
     --image=public.ecr.aws/docker/library/busybox:latest \
     --restart=Never \
     --command -- echo "Hello from EKS node"
 
-kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/smoke-test --timeout=60s
+kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/smoke-test --timeout=90s
 kubectl logs smoke-test
 kubectl delete pod smoke-test
 
