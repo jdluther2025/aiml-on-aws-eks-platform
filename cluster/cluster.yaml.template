@@ -4,7 +4,7 @@ kind: ClusterConfig
 metadata:
   name: eks-ai-platform
   region: ${AWS_REGION}
-  version: "1.31"
+  version: "${K8S_VERSION}"
 
 # VPC and subnets provisioned by CDK (infra/).
 # scripts/create-cluster.sh populates these values from CDK outputs.
@@ -22,19 +22,17 @@ vpc:
 # Each tutorial creates its own ServiceAccount + IAM role pair.
 iam:
   withOIDC: true
+  serviceRoleARN: "${CLUSTER_ROLE_ARN}"
 
 managedNodeGroups:
-  - name: cpu-nodes
-    instanceType: m5.xlarge
-    minSize: 1
-    maxSize: 5
-    desiredCapacity: 2
+  - name: ${EKS_DEFAULT_MNG_NAME}
+    instanceType: ${INSTANCE_TYPE}
+    minSize: ${EKS_DEFAULT_MNG_MIN}
+    maxSize: ${EKS_DEFAULT_MNG_MAX}
+    desiredCapacity: ${EKS_DEFAULT_MNG_DESIRED}
     privateNetworking: true
     iam:
-      attachPolicyARNs:
-        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      instanceRoleARN: "${NODE_ROLE_ARN}"
 
 addons:
   - name: vpc-cni
