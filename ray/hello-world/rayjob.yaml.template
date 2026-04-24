@@ -1,0 +1,60 @@
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: hello-world
+spec:
+  # The Python script to run as the Ray driver.
+  entrypoint: python /app/hello_ray.py
+
+  # Delete the RayCluster (pods) once the job finishes.
+  # Note: this removes Ray pods only — EC2 nodes keep running until
+  # Karpenter or the node autoscaler terminates idle instances.
+  shutdownAfterJobFinishes: true
+
+  # Keep the completed RayJob object for 2 minutes so you can inspect it.
+  ttlSecondsAfterFinished: 120
+
+  rayClusterSpec:
+    rayVersion: "${RAY_VERSION}"
+
+    headGroupSpec:
+      rayStartParams:
+        dashboard-host: "0.0.0.0"
+      template:
+        spec:
+          containers:
+            - name: ray-head
+              image: ${IMAGE_URI}
+              ports:
+                - containerPort: 6379
+                  name: gcs
+                - containerPort: 8265
+                  name: dashboard
+                - containerPort: 10001
+                  name: client
+              resources:
+                requests:
+                  cpu: "500m"
+                  memory: "1Gi"
+                limits:
+                  cpu: "1"
+                  memory: "2Gi"
+
+    workerGroupSpecs:
+      - groupName: cpu-workers
+        replicas: 2
+        minReplicas: 1
+        maxReplicas: 4
+        rayStartParams: {}
+        template:
+          spec:
+            containers:
+              - name: ray-worker
+                image: ${IMAGE_URI}
+                resources:
+                  requests:
+                    cpu: "500m"
+                    memory: "1Gi"
+                  limits:
+                    cpu: "1"
+                    memory: "2Gi"

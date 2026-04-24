@@ -20,6 +20,9 @@ vpc:
 
 # OIDC provider — required for IRSA (pod-level IAM roles).
 # Each tutorial creates its own ServiceAccount + IAM role pair.
+autoModeConfig:
+  enabled: false
+
 iam:
   withOIDC: true
   serviceRoleARN: "${CLUSTER_ROLE_ARN}"

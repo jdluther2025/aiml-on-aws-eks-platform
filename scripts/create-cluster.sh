@@ -7,8 +7,13 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# Must be run from the repo root (aiml-on-aws-eks-platform/).
+if [[ ! -d "infra" || ! -d "cluster" ]]; then
+    echo "ERROR: run this script from the repo root:"
+    echo "  cd aiml-on-aws-eks-platform && ./scripts/create-cluster.sh"
+    exit 1
+fi
+REPO_ROOT="$PWD"
 STACK_NAME="EksPlatformStack"
 
 # ── Cluster parameters (override via env vars) ─────────────────────────────
