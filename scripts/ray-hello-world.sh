@@ -5,13 +5,14 @@
 
 set -euo pipefail
 
-# Must be run from the repo root (aiml-on-aws-eks-platform/).
-if [[ ! -d "ray/hello-world" ]]; then
-    echo "ERROR: run this script from the repo root:"
-    echo "  cd aiml-on-aws-eks-platform && ./scripts/ray-hello-world.sh"
-    exit 1
-fi
-REPO_ROOT="$PWD"
+# Resolve the script's actual location regardless of how it was invoked.
+_SCRIPT="${BASH_SOURCE[0]}"
+case "${_SCRIPT}" in
+    /*)  ;;                                              # absolute path
+    */*) _SCRIPT="${PWD}/${_SCRIPT}" ;;                  # relative with dir
+    *)   _SCRIPT="$(command -v "${_SCRIPT}")" ;;         # bare name — resolve from PATH
+esac
+REPO_ROOT="$(cd "$(dirname "${_SCRIPT}")/.." && pwd)"
 
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --output text --query 'Account')
 export AWS_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
