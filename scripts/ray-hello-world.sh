@@ -80,13 +80,39 @@ if [[ -z "${HEAD_POD}" ]]; then
 fi
 
 echo ""
-echo "── STEP 6: Stream job output ───────────────────────────────────────────"
-echo "(Ray startup messages will appear before the job output)"
-echo ""
-kubectl logs -f "${HEAD_POD}" -n "${NAMESPACE}" --container ray-head 2>/dev/null || \
-    kubectl logs -f "${HEAD_POD}" -n "${NAMESPACE}" || true
+echo "── STEP 6: Wait for job to complete ────────────────────────────────────"
+JOB_STATUS=""
+for i in $(seq 1 40); do
+    JOB_STATUS=$(kubectl get rayjob "${JOB_NAME}" -n "${NAMESPACE}" \
+        -o jsonpath='{.status.jobStatus}' 2>/dev/null || true)
+    if [[ "${JOB_STATUS}" == "SUCCEEDED" || "${JOB_STATUS}" == "FAILED" ]]; then
+        echo "Job finished: ${JOB_STATUS}"
+        break
+    fi
+    echo "  job status: ${JOB_STATUS:-pending}... (${i}/40)"
+    sleep 5
+done
 
 echo ""
-echo "── STEP 7: Job status ──────────────────────────────────────────────────"
-kubectl get rayjob "${JOB_NAME}" -n "${NAMESPACE}" 2>/dev/null || \
-    echo "(RayJob already cleaned up — ttlSecondsAfterFinished elapsed)"
+echo "── STEP 7: Show distributed output ─────────────────────────────────────"
+echo "(Reading Ray driver log from head pod)"
+echo ""
+DRIVER_LOG=$(kubectl exec "${HEAD_POD}" -n "${NAMESPACE}" -- \
+    sh -c 'ls -t /tmp/ray/session_latest/logs/job-driver-*.log 2>/dev/null | head -1' 2>/dev/null || true)
+
+if [[ -n "${DRIVER_LOG}" ]]; then
+    kubectl exec "${HEAD_POD}" -n "${NAMESPACE}" -- cat "${DRIVER_LOG}"
+else
+    echo "Driver log not found — checking worker logs:"
+    kubectl exec "${HEAD_POD}" -n "${NAMESPACE}" -- \
+        sh -c 'cat /tmp/ray/session_latest/logs/worker-*.log 2>/dev/null | tail -40' || true
+fi
+
+echo ""
+echo "── STEP 8: Cleanup ─────────────────────────────────────────────────────"
+kubectl delete rayjob "${JOB_NAME}" -n "${NAMESPACE}" 2>/dev/null || true
+echo "RayJob deleted. KubeRay operator will clean up the Ray cluster pods."
+
+echo ""
+echo "── STEP 9: Final status ────────────────────────────────────────────────"
+echo "Job result: ${JOB_STATUS}"

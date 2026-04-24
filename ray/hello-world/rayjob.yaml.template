@@ -6,13 +6,13 @@ spec:
   # The Python script to run as the Ray driver.
   entrypoint: python /app/hello_ray.py
 
-  # Delete the RayCluster (pods) once the job finishes.
-  # Note: this removes Ray pods only — EC2 nodes keep running until
-  # Karpenter or the node autoscaler terminates idle instances.
-  shutdownAfterJobFinishes: true
+  # Keep the RayCluster running after the job finishes so we can read
+  # the driver log before cleaning up. The script deletes the RayJob
+  # explicitly after capturing output.
+  shutdownAfterJobFinishes: false
 
-  # Keep the completed RayJob object for 2 minutes so you can inspect it.
-  ttlSecondsAfterFinished: 120
+  # Keep the RayJob object for 10 minutes.
+  ttlSecondsAfterFinished: 600
 
   rayClusterSpec:
     rayVersion: "${RAY_VERSION}"
