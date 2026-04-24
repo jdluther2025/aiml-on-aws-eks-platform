@@ -43,7 +43,7 @@ Deletes the EKS cluster first (eksctl), then destroys the VPC and IAM (CDK). Ord
 
 | Component | Details |
 |---|---|
-| Kubernetes | 1.31 |
+| Kubernetes | 1.35 |
 | Node group | `cpu-nodes` — m5.xlarge, 1–5 nodes |
 | Networking | Private nodes, public subnets for load balancers |
 | OIDC | Enabled — required for IRSA (pod-level IAM) |
