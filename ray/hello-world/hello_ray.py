@@ -1,9 +1,11 @@
 import ray
 import socket
+import time
 
 
-@ray.remote
+@ray.remote(num_cpus=0.5)
 def process_chunk(chunk_id, text):
+    time.sleep(1)  # hold the slot long enough for Ray to spread work across pods
     host = socket.gethostname()
     return f"[Worker: {host}] chunk {chunk_id}: '{text[:45]}...'"
 
