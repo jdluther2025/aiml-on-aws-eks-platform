@@ -25,7 +25,7 @@ kubectl run smoke-test \
     --restart=Never \
     --command -- echo "Hello from EKS node"
 
-kubectl wait --for=condition=completed pod/smoke-test --timeout=60s
+kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/smoke-test --timeout=60s
 kubectl logs smoke-test
 kubectl delete pod smoke-test
 
